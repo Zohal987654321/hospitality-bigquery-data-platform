@@ -25,7 +25,8 @@ env:
 
 jobs:
   deploy:
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    # Skipped until the GCP repository variables are configured (see README "Deploy").
+    if: ${{ vars.GCP_PROJECT_ID != '' && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') }}
     runs-on: ubuntu-latest
     environment: production
     steps:
