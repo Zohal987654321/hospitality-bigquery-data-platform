@@ -1,0 +1,49 @@
+version: 2
+
+# The `ai` dataset is the only thing AI agents can read (see infra/terraform/iam.tf).
+# Descriptions below are written for an LLM reader: units, sign conventions, grain.
+
+models:
+  - name: daily_location_performance
+    description: >
+      Daily trading scorecard per venue. Grain: one row per venue per trading day.
+      Trading day ends 4am local time. Money is AUD excluding GST.
+    columns:
+      - name: location_name
+        description: Venue name.
+      - name: business_date
+        description: Trading date in the venue's local timezone (4am cutoff).
+      - name: net_sales
+        description: Completed sales minus refunds, after discounts, excluding GST (AUD).
+      - name: refunds
+        description: Refunded amount as a negative number (AUD ex GST).
+      - name: transaction_count
+        description: Number of completed transactions.
+      - name: avg_transaction_value
+        description: net_sales / transaction_count (AUD).
+      - name: labour_hours
+        description: Paid hours (shift length minus unpaid breaks), approved and pending shifts.
+      - name: labour_cost
+        description: Labour cost from the rostering system, AUD.
+      - name: labour_cost_pct
+        description: labour_cost / net_sales as a fraction (0.28 = 28%). Null when no sales.
+      - name: sales_per_labour_hour
+        description: net_sales / labour_hours (AUD per hour).
+      - name: staff_rostered
+        description: Distinct employees with a shift that day.
+      - name: budget_net_sales
+        description: Daily share of the monthly budget (AUD ex GST).
+      - name: variance_to_budget
+        description: net_sales - budget_net_sales. Positive = ahead of budget.
+      - name: estimated_cogs_pct
+        description: Estimated cost of goods / net sales, using current product unit costs.
+
+  - name: product_sales_daily
+    description: >
+      Sales by product per venue per trading day. Grain: venue x date x product.
+      Includes refunds as negatives; excludes voided transactions.
+    columns:
+      - name: quantity_sold
+        description: Units sold net of refunded units.
+      - name: net_sales
+        description: AUD excluding GST.

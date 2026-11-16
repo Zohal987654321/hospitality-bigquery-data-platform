@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hospitality-elt"
+version = "0.1.0"
+description = "Python ELT from hospitality business systems (POS, workforce, inventory) into Google BigQuery"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+  "httpx>=0.27",
+  "tenacity>=8.2",
+  "pydantic>=2.6",
+  "google-cloud-bigquery>=3.20",
+  "google-cloud-storage>=2.16",
+  "google-cloud-secret-manager>=2.20",
+  "paramiko>=3.4",
+  "fastapi>=0.110",
+  "uvicorn>=0.29",
+]
+
+[project.optional-dependencies]
+transform = ["dbt-bigquery>=1.10"]
+agents = ["mcp>=2.0"]
+dev = ["pytest>=8", "ruff>=0.5", "dbt-bigquery>=1.10", "mcp>=2.0"]
+
+[project.scripts]
+hospitality-elt = "hospitality_elt.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "."]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["transform/target", "transform/dbt_packages"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S"]
+ignore = ["S608"]  # SQL is built from validated identifiers only; see warehouse.py
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106"]
+"mock_sources/**" = ["S311", "S105", "S106"]

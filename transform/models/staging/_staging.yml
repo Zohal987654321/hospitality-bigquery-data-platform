@@ -1,0 +1,82 @@
+version: 2
+
+models:
+  - name: stg_pos__transactions
+    description: Latest version of each POS transaction header, typed.
+    columns:
+      - name: transaction_id
+        data_tests: [unique, not_null]
+      - name: pos_location_id
+        data_tests: [not_null]
+      - name: transaction_status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["completed", "voided", "refund"]
+      - name: opened_at_utc
+        data_tests: [not_null]
+
+  - name: stg_pos__transaction_lines
+    description: One row per line item, unnested from the transaction payload.
+    columns:
+      - name: transaction_line_key
+        data_tests: [unique, not_null]
+      - name: transaction_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('stg_pos__transactions')
+                field: transaction_id
+      - name: sku
+        data_tests: [not_null]
+
+  - name: stg_pos__products
+    columns:
+      - name: pos_product_id
+        data_tests: [unique, not_null]
+      - name: sku
+        data_tests: [unique, not_null]
+
+  - name: stg_pos__locations
+    columns:
+      - name: pos_location_id
+        data_tests: [unique, not_null]
+
+  - name: stg_workforce__employees
+    description: Employees with pseudonymised keys. No names, contact, tax, bank or pay-rate data.
+    columns:
+      - name: employee_key
+        data_tests: [unique, not_null]
+      - name: employment_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["full_time", "part_time", "casual"]
+
+  - name: stg_workforce__shifts
+    columns:
+      - name: shift_id
+        data_tests: [unique, not_null]
+      - name: employee_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_workforce__employees')
+                field: employee_key
+      - name: labour_cost
+        data_tests:
+          - within_range:
+              arguments:
+                min_value: 0
+                max_value: 2000
+
+  - name: stg_inventory__stock_counts
+    columns:
+      - name: stock_count_key
+        data_tests: [unique, not_null]
+      - name: quantity_on_hand
+        data_tests:
+          - within_range:
+              arguments:
+                min_value: 0

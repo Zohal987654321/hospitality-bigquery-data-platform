@@ -1,0 +1,59 @@
+name: hospitality
+version: "1.0.0"
+config-version: 2
+profile: hospitality
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+vars:
+  # Hospitality trading day: sales and shifts before 4am count to the previous day.
+  trading_day_cutoff_hour: 4
+  # Australian financial year starts in July.
+  fiscal_year_start_month: 7
+  date_spine_start: "2024-07-01"
+  date_spine_end: "2028-06-30"
+  # Incremental models reprocess this many days to absorb late-arriving updates.
+  incremental_lookback_days: 3
+
+models:
+  hospitality:
+    +persist_docs:
+      relation: true
+      columns: true
+    staging:
+      +schema: staging
+      +materialized: view
+      +labels: { layer: staging }
+    intermediate:
+      +schema: intermediate
+      +materialized: view
+    marts:
+      +schema: marts
+      +materialized: table
+      +labels: { layer: marts }
+    ai:
+      +schema: ai
+      +materialized: view
+      +labels: { layer: ai }
+
+seeds:
+  hospitality:
+    +schema: reference
+    location_crosswalk:
+      +column_types:
+        workforce_location_id: string
+        opened_on: date
+    location_monthly_budget:
+      +column_types:
+        budget_month: date
+        budget_net_sales: numeric
+
+data_tests:
+  hospitality:
+    +store_failures: true
+    +schema: dq_failures

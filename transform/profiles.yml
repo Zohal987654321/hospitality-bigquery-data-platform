@@ -1,0 +1,25 @@
+# Credentials come from Application Default Credentials:
+#  - locally: `gcloud auth application-default login`
+#  - Cloud Run: the job's service account (sa-transform)
+#  - GitHub Actions: Workload Identity Federation (no JSON keys anywhere)
+hospitality:
+  target: "{{ env_var('DBT_TARGET', 'dev') }}"
+  outputs:
+    dev:
+      type: bigquery
+      method: oauth
+      project: "{{ env_var('GCP_PROJECT_ID', 'local-project') }}"
+      dataset: "dbt_{{ env_var('USER', 'dev') | replace('-', '_') }}"
+      location: "{{ env_var('GCP_REGION', 'australia-southeast1') }}"
+      threads: 4
+      job_execution_timeout_seconds: 600
+      maximum_bytes_billed: 10000000000
+    prod:
+      type: bigquery
+      method: oauth
+      project: "{{ env_var('GCP_PROJECT_ID', 'local-project') }}"
+      dataset: analytics
+      location: "{{ env_var('GCP_REGION', 'australia-southeast1') }}"
+      threads: 8
+      job_execution_timeout_seconds: 1800
+      job_retries: 2

@@ -1,0 +1,134 @@
+version: 2
+
+models:
+  - name: dim_date
+    description: Calendar with Australian fiscal year (July start) and ISO weeks.
+    columns:
+      - name: date_key
+        description: Integer YYYYMMDD.
+        data_tests: [unique, not_null]
+      - name: fiscal_year
+        description: Financial year ending in June, e.g. FY2027 = Jul 2026 – Jun 2027.
+
+  - name: dim_location
+    description: One row per venue, with its identifier in every source system.
+    columns:
+      - name: location_key
+        description: Canonical venue identifier (e.g. LOC-001).
+        data_tests: [unique, not_null]
+
+  - name: dim_product
+    description: Menu items. SKU is the conformed key shared by POS and inventory.
+    columns:
+      - name: product_key
+        description: SKU.
+        data_tests: [unique, not_null]
+
+  - name: dim_employee
+    description: >
+      Pseudonymised employees: role and contract attributes only. No names, contact,
+      tax, bank or pay-rate data ever reaches the warehouse.
+    columns:
+      - name: employee_key
+        description: Keyed HMAC of the workforce-system employee ID.
+        data_tests: [unique, not_null]
+      - name: home_location_key
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_location')
+                field: location_key
+
+  - name: fct_sales_lines
+    description: One row per POS transaction line, all statuses. Incremental (merge).
+    data_tests:
+      - unique_combination:
+          arguments:
+            columns: [transaction_id, line_id]
+    columns:
+      - name: transaction_line_key
+        data_tests: [unique, not_null]
+      - name: location_key
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_location')
+                field: location_key
+      - name: product_key
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_product')
+                field: product_key
+      - name: date_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+      - name: business_date
+        description: Local trading date (4am cutoff).
+        data_tests: [not_null]
+
+  - name: fct_labour_shifts
+    description: One row per approved or pending shift.
+    columns:
+      - name: shift_id
+        data_tests: [unique, not_null]
+      - name: employee_key
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_employee')
+                field: employee_key
+      - name: location_key
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_location')
+                field: location_key
+      - name: paid_hours
+        data_tests:
+          - within_range:
+              arguments:
+                min_value: 0
+                max_value: 16
+
+  - name: fct_stock_counts
+    description: Weekly stocktake per venue and product.
+    columns:
+      - name: stock_count_key
+        data_tests: [unique, not_null]
+      - name: location_key
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_location')
+                field: location_key
+
+  - name: mart_daily_location_performance
+    description: >
+      Daily venue scorecard combining POS sales, rostered labour and budget.
+      One row per venue per trading day, including days with no trade.
+    data_tests:
+      - unique_combination:
+          arguments:
+            columns: [location_key, business_date]
+    columns:
+      - name: net_sales
+        description: Completed sales less refunds, AUD excluding GST, after discounts.
+      - name: transaction_count
+        description: Completed transactions (refunds and voids excluded).
+      - name: labour_cost_pct
+        description: Labour cost / net sales. Null when there were no sales.
+        data_tests:
+          - within_range:
+              config: { severity: warn }
+              arguments:
+                min_value: 0
+                max_value: 1.5
+      - name: sales_per_labour_hour
+        description: Net sales / paid labour hours.
+      - name: budget_net_sales
+        description: Monthly budget spread evenly across the days of the month.

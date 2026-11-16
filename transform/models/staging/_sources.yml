@@ -1,0 +1,41 @@
+version: 2
+
+# Raw tables are created by the Python ingestion jobs (append-only, JSON payload).
+# Freshness: daily loads are expected; warn after 26h, error after 50h.
+
+sources:
+  - name: raw_pos
+    description: Point-of-sale system, loaded via REST API (OAuth 2.0).
+    config:
+      loaded_at_field: _ingested_at
+      freshness:
+        warn_after: { count: 26, period: hour }
+        error_after: { count: 50, period: hour }
+    tables:
+      - name: transactions
+        description: One row per transaction version. Line items nested in payload.
+      - name: products
+      - name: locations
+
+  - name: raw_workforce
+    description: >
+      Workforce management system, loaded via REST API. Employee identifiers are
+      pseudonymised and contact/identity/bank/pay-rate fields removed before load.
+    config:
+      loaded_at_field: _ingested_at
+      freshness:
+        warn_after: { count: 26, period: hour }
+        error_after: { count: 50, period: hour }
+    tables:
+      - name: employees
+      - name: shifts
+
+  - name: raw_inventory
+    description: Inventory system weekly stock-count CSV exports, collected over SFTP.
+    config:
+      loaded_at_field: _ingested_at
+      freshness:
+        warn_after: { count: 8, period: day }
+        error_after: { count: 15, period: day }
+    tables:
+      - name: stock_counts

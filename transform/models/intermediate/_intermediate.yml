@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: int_sales__lines_enriched
+    description: Sales lines with header, conformed venue/product and trading date.
+  - name: int_labour__shifts_costed
+    description: Shifts on the conformed venue key and trading date, with paid hours.
+
+unit_tests:
+  - name: late_night_shift_counts_to_previous_trading_day
+    description: >
+      A shift starting at 1:30am Saturday Brisbane time belongs to Friday's trading day
+      (4am cutoff), and paid hours exclude the unpaid break.
+    model: int_labour__shifts_costed
+    given:
+      - input: ref('stg_workforce__shifts')
+        rows:
+          - { shift_id: "s1", employee_key: "e1", workforce_location_id: "1004", role: "bartender",
+              shift_status: "approved", start_at_utc: "2026-11-13 15:30:00 UTC",
+              end_at_utc: "2026-11-13 21:30:00 UTC", break_minutes: 30, labour_cost: 200 }
+      - input: ref('location_crosswalk')
+        rows:
+          - { location_key: "LOC-004", workforce_location_id: "1004", timezone: "Australia/Brisbane" }
+    expect:
+      rows:
+        - { shift_id: "s1", location_key: "LOC-004", business_date: "2026-11-13", paid_hours: 5.5 }

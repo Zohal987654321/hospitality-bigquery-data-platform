@@ -1,0 +1,15 @@
+.git
+.github
+.local
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+transform/target
+transform/logs
+transform/dbt_packages
+infra
+tests
+mock_sources
+docs
+*.tfstate*
+.env

@@ -1,0 +1,5 @@
+location_key,location_name,state,timezone,pos_location_id,workforce_location_id,inventory_location_code,opened_on
+LOC-001,Harbourside Cafe,NSW,Australia/Sydney,pos_loc_8f1a,1001,BONDI,2021-03-01
+LOC-002,Laneway Bistro,NSW,Australia/Sydney,pos_loc_2c7e,1002,SURRY,2022-08-15
+LOC-003,Northside Kitchen,VIC,Australia/Melbourne,pos_loc_9b3d,1003,FITZ,2023-05-01
+LOC-004,Riverfront Bar,QLD,Australia/Brisbane,pos_loc_4e6f,1004,SBANK,2024-11-20

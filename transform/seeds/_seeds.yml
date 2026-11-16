@@ -1,0 +1,43 @@
+version: 2
+
+seeds:
+  - name: location_crosswalk
+    description: >
+      Master list of venues and their identifiers in each source system. This is the
+      single place where "which POS location is which rostering location" is decided.
+      Adding a venue = one row here. Owned by operations; changes go through PR review.
+    columns:
+      - name: location_key
+        description: Canonical venue identifier used across the warehouse.
+        data_tests: [unique, not_null]
+      - name: pos_location_id
+        data_tests: [unique, not_null]
+      - name: workforce_location_id
+        data_tests: [unique, not_null]
+      - name: inventory_location_code
+        data_tests: [unique, not_null]
+      - name: timezone
+        description: IANA timezone; used to derive local trading dates.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["Australia/Sydney", "Australia/Melbourne", "Australia/Brisbane",
+                         "Australia/Adelaide", "Australia/Perth", "Australia/Hobart",
+                         "Australia/Darwin"]
+
+  - name: location_monthly_budget
+    description: >
+      Monthly net sales budget per venue (AUD ex GST). In production this is loaded
+      from the financial planning export through the same file-ingestion pattern as
+      inventory; it is a seed here to keep the demo self-contained.
+    data_tests:
+      - unique_combination:
+          arguments:
+            columns: [location_key, budget_month]
+    columns:
+      - name: location_key
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('location_crosswalk')
+                field: location_key
