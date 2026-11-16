@@ -129,6 +129,9 @@ make lint        # ruff
 make dbt-parse   # validates every model, test and unit test in the dbt project
 ```
 
+To load the same data into a real BigQuery project and run dbt there, see
+[docs/bigquery-quickstart.md](docs/bigquery-quickstart.md).
+
 ---
 
 ## Deploy to Google Cloud
@@ -189,6 +192,7 @@ docs/                 runbook, data model, security, AI access
 
 ## Documentation
 
+- [Quickstart: run it on real BigQuery](docs/bigquery-quickstart.md)
 - [Runbook: failures, recovery, backfills, adding a source](docs/runbook.md)
 - [Data model: layers, grain, keys, metric definitions](docs/data-model.md)
 - [Security and governance: PII, IAM, secrets](docs/security-and-governance.md)

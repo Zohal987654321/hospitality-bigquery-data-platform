@@ -74,9 +74,15 @@ def build_source(name: str, settings: Settings, secrets: SecretProvider) -> Sour
 
 
 def _targets(settings: Settings):
+    """Local runs write to files unless WAREHOUSE=bigquery, which loads the mock data
+    into a real BigQuery project (landing files stay on disk). Cloud runs use GCS + BigQuery."""
     if settings.is_local:
         root = Path(settings.local_data_dir)
-        return LocalWarehouse(root / "warehouse"), LocalLanding(root / "landing")
+        landing = LocalLanding(root / "landing")
+        if os.environ.get("WAREHOUSE", "local") == "bigquery":
+            wh = BigQueryWarehouse(settings.project_id, settings.region, settings.ops_dataset)
+            return wh, landing
+        return LocalWarehouse(root / "warehouse"), landing
     return (
         BigQueryWarehouse(settings.project_id, settings.region, settings.ops_dataset),
         GcsLanding(settings.landing_bucket),
